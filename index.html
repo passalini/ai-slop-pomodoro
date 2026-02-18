@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Slop Pomodoro</title>
+    <meta name="theme-color" content="#FFF7F5" />
+    <!-- Tomato Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍅</text></svg>">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- GitHub Fork Ribbon CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css" />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              focus: {
+                primary: "#EF4444",
+                saturated: "#E03C25",
+                bg: "#FFF7F5",
+                accent: "#FEE2E2",
+                metric: "rgba(254, 226, 226, 0.5)"
+              },
+              break: {
+                primary: "#4FD1C5",
+                saturated: "#2D8B8B",
+                bg: "#F0FAF9",
+                accent: "#D1EEEE",
+                metric: "rgba(79, 209, 197, 0.1)"
+              }
+            },
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+            }
+          },
+        },
+      };
+    </script>
+    <style>
+      :root {
+        --focus-bg: #FFF7F5;
+        --ribbon-color: #E03C25; /* Default focus color */
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background-color: var(--focus-bg);
+        overscroll-behavior: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        user-select: none;
+      }
+      #root {
+        height: 100%;
+        width: 100%;
+      }
+      .tabular-nums {
+        font-variant-numeric: tabular-nums;
+      }
+      /* Custom Ribbon Styles to follow app theme */
+      .github-fork-ribbon:before {
+        background-color: var(--ribbon-color) !important;
+        transition: background-color 0.5s ease;
+      }
+      /* Hide ribbon on mobile if it covers essential UI, 
+         but based on the design it sits in a safe corner */
+      @media (max-width: 640px) {
+        .github-fork-ribbon {
+          scale: 0.8;
+          transform-origin: top right;
+        }
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
