@@ -339,7 +339,7 @@ const App: React.FC = () => {
       {/* github-fork-ribbon-css component */}
       <a 
         className="github-fork-ribbon right-top" 
-        href="https://github.com/passalini/slop-pomodoro" 
+        href="https://github.com/passalini/ai-slop-pomodoro" 
         data-ribbon="Fork me on GitHub" 
         title="Fork me on GitHub"
         target="_blank"
