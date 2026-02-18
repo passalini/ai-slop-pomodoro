@@ -1,5 +1,5 @@
 {
-  "name": "Copy of Slop Pomodoro V0.19 (badge try#3 done!)",
-  "description": "23:00@17/02: Update readme and github infos\n18:20@17/02: save session times to local storage\n18:14@17/02: fix phone notification\n17:58@17/02: title refactoring\n17:36@17/02: vercel config\n17:17@17/02: mvp done\n# LOG\n\nA high-fidelity Pomodoro timer with interactive radial configuration, smooth mode transitions, and focus statistics.",
+  "name": "Slop Pomodoro V0.2 ",
+  "description": "00:50@18/02: add github badge\n23:00@17/02: Update readme and github infos\n18:20@17/02: save session times to local storage\n18:14@17/02: fix phone notification\n17:58@17/02: title refactoring\n17:36@17/02: vercel config\n17:17@17/02: mvp done\n# LOG\n\nA high-fidelity Pomodoro timer with interactive radial configuration, smooth mode transitions, and focus statistics.",
   "requestFramePermissions": []
 }
