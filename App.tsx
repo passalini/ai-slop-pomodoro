@@ -4,6 +4,8 @@ import CircularTimer from './components/CircularTimer';
 import Controls from './components/Controls';
 import StatsBar from './components/StatsBar';
 import TimeInputModal from './components/TimeInputModal';
+import LocalFirstNotification from './components/LocalFirstNotification';
+import InstallTooltip from './components/InstallTooltip';
 
 const DEFAULTS = {
   focus: 25 * 60,
@@ -17,6 +19,7 @@ const STORAGE_KEYS = {
   totalFocusTime: 'pomodoro_total_focus_time',
   totalBreakTime: 'pomodoro_total_break_time',
   focusCompletedInCurrentCycle: 'pomodoro_focus_cycle_flag',
+  localFirstNotified: 'pomodoro_local_first_notified',
 };
 
 const COMPLETION_SOUND = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
@@ -57,6 +60,12 @@ const App: React.FC = () => {
   });
 
   const [isInputModalOpen, setIsInputModalOpen] = useState(false);
+  const [showLocalFirstNote, setShowLocalFirstNote] = useState(() => {
+    return localStorage.getItem(STORAGE_KEYS.localFirstNotified) !== 'true';
+  });
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallTooltip, setShowInstallTooltip] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
   const timerRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -117,6 +126,27 @@ const App: React.FC = () => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Check if app is running in standalone mode (installed)
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    setIsStandalone(isPWA);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
   }, []);
 
   useEffect(() => {
@@ -359,6 +389,25 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.focusCompletedInCurrentCycle, 'false');
   };
 
+  const handleCloseLocalFirstNote = () => {
+    setShowLocalFirstNote(false);
+    localStorage.setItem(STORAGE_KEYS.localFirstNotified, 'true');
+  };
+
+  const handleInstallClick = () => {
+    setShowInstallTooltip(true);
+  };
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+    setShowInstallTooltip(false);
+  };
+
   const isFocus = state.mode === 'focus';
   const isRunning = state.status === 'running';
   const isAlarm = state.status === 'alarm';
@@ -390,10 +439,22 @@ const App: React.FC = () => {
         Fork me on GitHub
       </a>
 
-      <header className="w-full text-center pt-[3vh] pb-[2vh] z-10 shrink-0">
+      <header className="w-full flex items-center justify-between px-6 pt-[3vh] pb-[2vh] z-10 shrink-0">
+        <div className="w-10 flex justify-start">
+          {!isStandalone && (
+            <button
+              onClick={handleInstallClick}
+              className={`p-2 rounded-full transition-all duration-300 ${isActive ? 'text-white/40 hover:bg-white/10' : (isFocus ? 'text-focus-primary/40 hover:bg-focus-primary/10' : 'text-break-primary/40 hover:bg-break-primary/10')}`}
+              title="Install App"
+            >
+              <span className="material-symbols-outlined text-[20px]">install_desktop</span>
+            </button>
+          )}
+        </div>
         <h1 className={`font-bold tracking-[0.5em] text-[11px] md:text-[12px] uppercase transition-all duration-300 ${isActive ? 'text-white/70' : (isFocus ? 'text-focus-primary/60' : 'text-break-primary/60')}`}>
           Slop Pomodoro
         </h1>
+        <div className="w-10" /> {/* Spacer */}
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-sm relative px-6 py-3">
@@ -435,6 +496,24 @@ const App: React.FC = () => {
             updateDuration(mins);
             setIsInputModalOpen(false);
           }}
+        />
+      )}
+
+      {showLocalFirstNote && (
+        <LocalFirstNotification
+          onClose={handleCloseLocalFirstNote}
+          isActive={isActive}
+          isFocus={isFocus}
+        />
+      )}
+
+      {showInstallTooltip && (
+        <InstallTooltip
+          onClose={() => setShowInstallTooltip(false)}
+          onInstall={handleInstallApp}
+          deferredPrompt={deferredPrompt}
+          isActive={isActive}
+          isFocus={isFocus}
         />
       )}
     </div>
