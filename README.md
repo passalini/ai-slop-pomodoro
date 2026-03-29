@@ -13,6 +13,7 @@ Access [Slop Pomodoro here](https://slop-pomodoro.vercel.app/)!
 - **Native Notifications**: Desktop notifications to keep you on track even when the tab is in the background.
 - **Audio Alerts**: Subtle chime sounds for session completion.
 - **Persistence**: Remembers your preferred durations using `localStorage`.
+- **Local-first / Offline Support**: Thanks to PWA integration, the app works fully offline after the first visit and can be installed on your device.
 
 ## Hidden Features
 
@@ -32,6 +33,26 @@ This application was developed and refined using **Google AI Studio**. The UI/UX
 ## Design Reference
 
 The visual identity and user interface of Slop Pomodoro are based on designs exported from **Google Stitch**, which served as the fixed visual reference for this implementation. Every detail, from the typography to the specific color ramps for Focus and Break modes, was meticulously translated from the Stitch UI to a functional React application.
+
+## Local Development
+
+To run Slop Pomodoro on your machine:
+
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Start Dev Server**:
+   ```bash
+   npm run dev
+   ```
+3. **PWA & Offline Testing**:
+   To verify the offline capabilities, you must build the project:
+   ```bash
+   npm run build
+   npm run preview
+   ```
+   After running preview, open the app, and you can test it by turning off your internet connection or using the "Offline" mode in browser DevTools.
 
 ## How to Use
 
