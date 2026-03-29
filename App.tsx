@@ -36,7 +36,7 @@ const getSavedDuration = (mode: TimerMode): number => {
 const App: React.FC = () => {
   const [state, setState] = useState<TimerState>(() => {
     const focusDuration = getSavedDuration('focus');
-    
+
     // Restore persistent statistics
     const savedSessions = localStorage.getItem(STORAGE_KEYS.sessionsCount);
     const savedFocusTime = localStorage.getItem(STORAGE_KEYS.totalFocusTime);
@@ -59,6 +59,28 @@ const App: React.FC = () => {
   const [isInputModalOpen, setIsInputModalOpen] = useState(false);
   const timerRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      } catch (err: any) {
+        console.warn("Wake lock request failed:", err);
+      }
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLockRef.current) {
+      try {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      } catch (err: any) {
+        console.warn("Wake lock release failed:", err);
+      }
+    }
+  }, []);
 
   // Effect to persist statistics whenever they change
   useEffect(() => {
@@ -67,6 +89,26 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEYS.totalBreakTime, state.totalBreakTime.toString());
     localStorage.setItem(STORAGE_KEYS.focusCompletedInCurrentCycle, state.focusCompletedInCurrentCycle.toString());
   }, [state.sessionsCount, state.totalFocusTime, state.totalBreakTime, state.focusCompletedInCurrentCycle]);
+
+  useEffect(() => {
+    if (state.status === 'running') {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && state.status === 'running') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      releaseWakeLock();
+    };
+  }, [state.status, requestWakeLock, releaseWakeLock]);
 
   useEffect(() => {
     audioRef.current = new Audio(COMPLETION_SOUND);
@@ -81,7 +123,7 @@ const App: React.FC = () => {
     const isFocus = state.mode === 'focus';
     const isRunning = state.status === 'running';
     const isAlarm = state.status === 'alarm';
-    
+
     if (state.status === 'idle' && !state.configOpen) {
       document.title = 'Slop Pomodoro';
     } else {
@@ -144,7 +186,7 @@ const App: React.FC = () => {
       try {
         const title = finishedMode === 'focus' ? 'Focus Session Complete!' : 'Break Over!';
         const body = finishedMode === 'focus' ? 'Excellent work. Time to take a short break.' : 'Time to get back into the flow!';
-        
+
         new Notification(title, {
           body,
           icon: 'https://cdn-icons-png.flaticon.com/512/2972/2972531.png',
@@ -162,7 +204,7 @@ const App: React.FC = () => {
     setState(prev => {
       const newMode: TimerMode = prev.mode === 'focus' ? 'break' : 'focus';
       const newDuration = getSavedDuration(newMode);
-      
+
       return {
         ...prev,
         mode: newMode,
@@ -202,9 +244,9 @@ const App: React.FC = () => {
           }
         }
 
-        return { 
-          ...prev, 
-          remainingTime: 0, 
+        return {
+          ...prev,
+          remainingTime: 0,
           status: 'alarm',
           sessionsCount: newSessionsCount,
           focusCompletedInCurrentCycle: newFocusCompletedFlag,
@@ -271,16 +313,16 @@ const App: React.FC = () => {
   };
 
   const skipTimer = () => {
-    setState(prev => ({...prev, focusCompletedInCurrentCycle: false }));
+    setState(prev => ({ ...prev, focusCompletedInCurrentCycle: false }));
     switchMode();
   };
 
   const openConfig = () => {
-    setState(prev => ({ 
-      ...prev, 
-      configOpen: true, 
+    setState(prev => ({
+      ...prev,
+      configOpen: true,
       status: 'paused',
-      remainingTime: prev.duration 
+      remainingTime: prev.duration
     }));
   };
 
@@ -309,7 +351,7 @@ const App: React.FC = () => {
       totalBreakTime: 0,
       focusCompletedInCurrentCycle: false,
     }));
-    
+
     // Explicit Local Storage reset to ensure data is wiped instantly
     localStorage.setItem(STORAGE_KEYS.sessionsCount, '0');
     localStorage.setItem(STORAGE_KEYS.totalFocusTime, '0');
@@ -326,21 +368,21 @@ const App: React.FC = () => {
     ? (isFocus ? 'bg-focus-saturated' : 'bg-break-saturated')
     : (isFocus ? 'bg-focus-bg' : 'bg-break-bg');
 
-  const statsBtnBg = isActive 
-    ? 'bg-transparent hover:bg-white/10 active:bg-white/20' 
+  const statsBtnBg = isActive
+    ? 'bg-transparent hover:bg-white/10 active:bg-white/20'
     : 'bg-transparent hover:bg-black/5 active:bg-black/10';
-  
-  const statsBtnText = isActive 
-    ? 'text-white/40' 
+
+  const statsBtnText = isActive
+    ? 'text-white/40'
     : (isFocus ? 'text-focus-primary/40' : 'text-break-primary/40');
 
   return (
     <div className={`h-full w-full flex flex-col items-center transition-colors duration-700 overflow-hidden ${bgColorClass}`}>
       {/* github-fork-ribbon-css component */}
-      <a 
-        className="github-fork-ribbon right-top" 
-        href="https://github.com/passalini/ai-slop-pomodoro" 
-        data-ribbon="Fork me on GitHub" 
+      <a
+        className="github-fork-ribbon right-top"
+        href="https://github.com/passalini/ai-slop-pomodoro"
+        data-ribbon="Fork me on GitHub"
         title="Fork me on GitHub"
         target="_blank"
         rel="noopener noreferrer"
@@ -355,9 +397,9 @@ const App: React.FC = () => {
       </header>
 
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-sm relative px-6 py-3">
-        <CircularTimer 
-          state={state} 
-          onOpenConfig={openConfig} 
+        <CircularTimer
+          state={state}
+          onOpenConfig={openConfig}
           onCloseConfig={closeConfig}
           onUpdateDuration={updateDuration}
           onTimeClick={() => setIsInputModalOpen(true)}
@@ -365,17 +407,17 @@ const App: React.FC = () => {
       </main>
 
       <footer className="w-full flex flex-col items-center pb-[6vh] px-6 shrink-0 transition-all duration-300 z-10 gap-[6vh]">
-        <Controls 
-          state={state} 
-          onToggle={toggleTimer} 
-          onReset={resetTimer} 
-          onSkip={skipTimer} 
+        <Controls
+          state={state}
+          onToggle={toggleTimer}
+          onReset={resetTimer}
+          onSkip={skipTimer}
         />
-        
+
         <div className="flex flex-col items-center gap-3 w-full max-w-[340px]">
           <StatsBar state={state} />
-          
-          <button 
+
+          <button
             onClick={clearStats}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-full transition-all duration-200 text-[9px] font-bold tracking-[0.1em] uppercase ${statsBtnBg} ${statsBtnText}`}
           >
@@ -386,7 +428,7 @@ const App: React.FC = () => {
       </footer>
 
       {isInputModalOpen && (
-        <TimeInputModal 
+        <TimeInputModal
           mode={state.mode}
           onClose={() => setIsInputModalOpen(false)}
           onConfirm={(mins) => {
